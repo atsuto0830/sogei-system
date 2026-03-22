@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>YONAGO HIGASHI</title>
+</head>
+
+<body>
+  <h1>YONAGO HIGASHI</h1>
+
+  <input type="text" id="name" placeholder="名字を入力">
+  <input type="number" id="seats" placeholder="人数を入力">
+  <button onclick="submitData()">追加する</button>
+
+  <p id="remaining">残り 27 人分です</p>
+
+  <button onclick="resetAll()">全体をリセット</button>
+
+  <ul id="list"></ul>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+    // 🔥 自分のFirebase設定（ここだけ確認）
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJcRUa5iDhZA8Edt-DomeW0zNYYInE2TE",
+      authDomain: "ride-hailing-69c3c.firebaseapp.com",
+      databaseURL: "https://ride-hailing-69c3c-default-rtdb.firebaseio.com/",
+      projectId: "ride-hailing-69c3c",
+      storageBucket: "ride-hailing-69c3c.firebasestorage.app",
+      messagingSenderId: "848739918145",
+      appId: "1:848739918145:web:297d1bd97500896aa801c0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 追加
+    window.submitData = function() {
+      const name = document.getElementById("name").value;
+      const seats = document.getElementById("seats").value;
+
+      if (!name || !seats) {
+        alert("名字と人数の両方を入力してください。");
+        return;
+      }
+
+      push(ref(db, "cars"), {
+        name: name,
+        seats: Number(seats)
+      });
+
+      document.getElementById("name").value = "";
+      document.getElementById("seats").value = "";
+    };
+
+    // リアルタイム更新
+    onValue(ref(db, "cars"), (snapshot) => {
+      const data = snapshot.val();
+      let total = 0;
+
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+
+      if (data) {
+        Object.values(data).forEach(item => {
+          total += item.seats;
+
+          const li = document.createElement("li");
+          li.textContent = item.name + "さんの車に " + item.seats + " 人乗れます";
+          list.appendChild(li);
+        });
+      }
+
+      const remaining = 27 - total;
+      document.getElementById("remaining").innerText =
+        "残り " + remaining + " 人分です";
+    });
+
+    // 全体リセット
+    window.resetAll = function() {
+      if (confirm("本当に全体をリセットしますか？")) {
+        remove(ref(db, "cars"));
+      }
+    };
+  </script>
+</body>
+</html>
